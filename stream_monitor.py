@@ -230,49 +230,52 @@ def get_uptime_stats():
     return stats
 
 def get_timeout_stats():
-    """Get timeout statistics from database"""
+    """Get timeout statistics for TODAY only in configured timezone"""
     if not LOGGING_CONFIG["log_to_database"]:
         return None
     
+    # We'll filter in Python using today's bounds in configured timezone
     conn = sqlite3.connect(LOGGING_CONFIG["database_path"])
     cursor = conn.cursor()
-    
-    # Get timeout stats for last 24 hours
     cursor.execute('''
-        SELECT 
-            stream_name,
-            COUNT(*) as total_timeouts,
-            AVG(response_time) as avg_timeout_time,
-            MIN(response_time) as min_timeout_time,
-            MAX(response_time) as max_timeout_time
-        FROM uptime_logs 
-        WHERE timestamp >= datetime('now', '-24 hours')
-        AND status = 'offline'
-        AND response_time > 0
-        GROUP BY stream_name
-    ''')
-    
-    timeout_stats = cursor.fetchall()
-    
-    # Get recent timeout events
-    cursor.execute('''
-        SELECT 
-            timestamp,
-            stream_name,
-            response_time,
-            error_message
-        FROM uptime_logs 
-        WHERE timestamp >= datetime('now', '-24 hours')
-        AND status = 'offline'
-        AND response_time > 0
+        SELECT timestamp, stream_name, status, response_time, error_message
+        FROM uptime_logs
+        WHERE status = 'offline' AND response_time > 0
         ORDER BY timestamp DESC
-        LIMIT 10
     ''')
-    
-    recent_timeouts = cursor.fetchall()
-    
+    rows = cursor.fetchall()
     conn.close()
-    
+
+    start_today, end_today, tz = _get_today_bounds()
+
+    # Filter rows to today in configured TZ
+    today_rows = []
+    for ts, stream_name, status, response_time, error_message in rows:
+        dt = _parse_iso_to_tz(ts, tz)
+        if dt is None:
+            continue
+        if start_today <= dt <= end_today:
+            today_rows.append((ts, stream_name, response_time, error_message))
+
+    # Aggregate stats by stream
+    from collections import defaultdict
+    by_stream = defaultdict(list)
+    for ts, stream_name, response_time, error_message in today_rows:
+        by_stream[stream_name].append(response_time)
+
+    timeout_stats = []
+    for stream_name, times in by_stream.items():
+        if not times:
+            continue
+        total = len(times)
+        avg_t = sum(times) / total
+        min_t = min(times)
+        max_t = max(times)
+        timeout_stats.append((stream_name, total, avg_t, min_t, max_t))
+
+    # Recent timeouts limited to 10 for today
+    recent_timeouts = today_rows[:10]
+
     return timeout_stats, recent_timeouts
 
 def get_downtime_periods():
@@ -362,6 +365,32 @@ def format_duration(seconds):
     else:
         hours = seconds / 3600
         return f"{hours:.1f}h"
+
+def _get_today_bounds() -> tuple[datetime, datetime, pytz.BaseTzInfo]:
+    """Return (start_of_today, end_of_today, tz) in the configured timezone."""
+    tz = pytz.timezone(SCHEDULE["timezone"])
+    now_tz = datetime.now(tz)
+    start = now_tz.replace(hour=0, minute=0, second=0, microsecond=0)
+    end = start.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return start, end, tz
+
+def _parse_iso_to_tz(dt_iso: str, tz: pytz.BaseTzInfo) -> datetime | None:
+    try:
+        # Support stored timestamps with offset (e.g., +08:00) or 'Z'
+        dt = datetime.fromisoformat(dt_iso.replace('Z', '+00:00'))
+        if dt.tzinfo is None:
+            return tz.localize(dt)
+        return dt.astimezone(tz)
+    except Exception:
+        return None
+
+def _interval_overlaps_today(start_iso: str, end_iso: str) -> bool:
+    start_today, end_today, tz = _get_today_bounds()
+    start_dt = _parse_iso_to_tz(start_iso, tz)
+    end_dt = datetime.now(tz) if end_iso == 'Ongoing' else _parse_iso_to_tz(end_iso, tz)
+    if start_dt is None or end_dt is None:
+        return False
+    return max(start_dt, start_today) <= min(end_dt, end_today)
 
 def _split_duration_by_day(start_iso: str, end_iso: str, duration_seconds: float) -> dict:
     """Split a downtime interval across calendar days and return seconds per YYYY-MM-DD.
@@ -624,7 +653,7 @@ else:
 
 # Display timeout statistics
 st.markdown("---")
-st.markdown("### ⏱️ Timeout Analysis (Last 24 Hours)")
+st.markdown("### ⏱️ Timeout Analysis (Today)")
 timeout_data = get_timeout_stats()
 if timeout_data and timeout_data[0]:
     timeout_stats, recent_timeouts = timeout_data
@@ -661,13 +690,16 @@ if timeout_data and timeout_data[0]:
 else:
     st.info("No timeout data available yet. Timeout information will appear after monitoring begins.")
 
-# Display downtime periods (Website only, recent first)
+# Display downtime periods (Website only, recent first) - Today only
 st.markdown("---")
-st.markdown("### 🔴 Website Downtime Events (Recent First)")
+st.markdown("### 🔴 Website Downtime Events (Today, Recent First)")
 downtime_data = get_downtime_periods()
 if downtime_data and 'Website' in downtime_data:
     periods = downtime_data.get('Website') or []
     if periods:
+        # Keep only periods overlapping today
+        today_periods = [p for p in periods if _interval_overlaps_today(p['start'], p['end'])]
+        periods = today_periods
         # Calculate total/avg/longest
         total_downtime = sum(period['duration_seconds'] for period in periods)
         col1, col2, col3 = st.columns(3)
