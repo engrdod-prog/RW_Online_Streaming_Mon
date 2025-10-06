@@ -1,0 +1,738 @@
+[
+  {
+    "timestamp": "2025-10-06T09:59:23.124818+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.757452,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T10:00:58.395123+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.495386,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T10:01:12.936850+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 0.006469,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T10:01:23.632296+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 0.002411,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T10:02:16.402204+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 0.005521,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T10:02:32.976560+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 0.003524,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T10:02:36.594469+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.446492,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:38:56.163511+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.834436,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:39:10.283263+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.4656,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:40:05.042555+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.469313,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:41:40.390628+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.520266,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:43:10.694706+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 0.004036,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:43:34.590585+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.998784,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:46:00.150230+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.351168,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:46:44.941317+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 0.002502,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:51:56.574324+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.58207,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:53:54.787659+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 0.00473,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:55:59.155752+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.81927,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:56:58.874545+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.416882,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:57:30.437564+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.332684,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:58:00.547570+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.447084,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:58:30.442638+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.346246,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:58:57.099521+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.356151,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:59:27.556329+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.382694,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T13:59:57.518887+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.351864,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:00:27.507929+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.338632,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:15:05.883632+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 8.002729,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:17:55.229139+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 0.005701,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:18:26.102535+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.666016,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:27:59.142383+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.312186,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:28:29.581321+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.37016,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:28:59.688382+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.457742,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:29:29.507066+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.301161,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:29:59.587100+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.38029,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:30:29.568074+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.356604,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:30:59.787132+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.48021,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:31:30.418785+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.351415,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:32:04.121760+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.856303,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:32:50.254285+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 1.343644,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:33:30.879156+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 1.269666,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:34:39.674403+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.353786,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:35:09.664804+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.337932,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:35:43.176028+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 3.849057,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:36:10.313063+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.983057,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:36:40.736000+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 1.40815,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:37:09.784452+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.456833,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:37:39.657037+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.325628,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:37:44.329558+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.449048,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:38:14.724766+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.311164,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:38:43.610479+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.34775,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:39:14.786986+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 1.087362,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:39:44.120672+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.421365,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:40:15.509164+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.463484,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:40:35.496954+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.927846,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:40:55.095158+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.368998,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:40:59.320913+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.358146,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:41:06.009794+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.373682,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:41:35.978872+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.342589,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:44:40.748574+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.39943,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:44:54.228455+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.350797,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:44:56.457509+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.381189,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:45:11.251148+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.394375,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:50:22.475512+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.664846,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:50:52.897674+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.340233,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:51:22.565022+08:00",
+    "stream_name": "Website",
+    "status": "offline",
+    "response_time": 0.006306,
+    "error_message": "Stream offline",
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:51:53.084826+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.526189,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:52:22.877903+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.321828,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:52:52.936705+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.381413,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:53:09.295535+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.391897,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:53:10.896424+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.401914,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:53:22.912540+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.350447,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:53:53.781257+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 1.220701,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:54:08.039802+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 3.509682,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:54:09.103159+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.423387,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:54:39.570295+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.353596,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:55:09.588670+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.337992,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:55:34.573885+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 1.48524,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:55:46.518750+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.393596,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:55:47.809278+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.312279,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:56:05.057506+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.366438,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:56:35.083583+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.39447,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:57:05.097369+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.40398,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:57:25.016937+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.335288,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:57:26.367215+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.359988,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:57:35.107713+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.416644,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:58:05.036403+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.34774,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:58:36.921561+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 2.134612,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T14:59:07.377305+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.348294,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T15:00:08.635446+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.30715,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T15:01:29.804774+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.370848,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T15:02:52.221815+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.35476,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "timestamp": "2025-10-06T15:05:06.239675+08:00",
+    "stream_name": "Website",
+    "status": "online",
+    "response_time": 0.302637,
+    "error_message": null,
+    "timezone": "Asia/Singapore"
+  }
+]
