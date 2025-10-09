@@ -474,7 +474,6 @@ def export_zip_combined_csv() -> bytes:
 ## JSON export removed per request
 
 # --- Streamlit App ---
-st.set_page_config(page_title="Stream Uptime Monitor", layout="wide")
 
 # Initialize database
 init_database()
@@ -543,62 +542,31 @@ if "last_icecast_meta" in st.session_state:
     s = st.session_state["last_icecast_meta"]
     st.caption(f"Website mount: listeners={s.get('listeners')} bitrate={s.get('bitrate') or s.get('ice-bitrate')} type={s.get('server_type')}")
 
-# Display uptime statistics
+# Uptime (Today) using (1050 mins - total downtime mins) / 1050
 st.markdown("---")
-st.markdown("### 📊 Uptime Statistics (Last 24 Hours)")
-stats = get_uptime_stats()
-if stats:
-    for stat in stats:
-        stream_name, total_checks, online_count, avg_response_time = stat
-        uptime_percentage = (online_count / total_checks * 100) if total_checks > 0 else 0
-        st.metric(
-            label=f"{stream_name} Uptime",
-            value=f"{uptime_percentage:.1f}%",
-            delta=f"{online_count}/{total_checks} checks"
-        )
-        if avg_response_time:
-            st.caption(f"Average response time: {avg_response_time:.2f}s")
-else:
-    st.info("No statistics available yet. Data will appear after monitoring begins.")
+st.markdown("### 📊 Uptime (Today)")
 
-# Display timeout statistics
-st.markdown("---")
-st.markdown("### ⏱️ Timeout Analysis (Today)")
-timeout_data = get_timeout_stats()
-if timeout_data and timeout_data[0]:
-    timeout_stats, recent_timeouts = timeout_data
-    
-    # Display timeout summary
-    for stat in timeout_stats:
-        stream_name, total_timeouts, avg_timeout_time, min_timeout_time, max_timeout_time = stat
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric(
-                label=f"{stream_name} Total Timeouts",
-                value=total_timeouts
-            )
-        
-        with col2:
-            st.metric(
-                label="Average Timeout Time",
-                value=f"{avg_timeout_time:.2f}s" if avg_timeout_time else "N/A"
-            )
-        
-        with col3:
-            st.metric(
-                label="Timeout Range",
-                value=f"{min_timeout_time:.2f}s - {max_timeout_time:.2f}s" if min_timeout_time and max_timeout_time else "N/A"
-            )
-    
-    # Display recent timeout events
-    if recent_timeouts:
-        st.markdown("#### 🔍 Recent Timeout Events")
-        for timeout in recent_timeouts:
-            timestamp, stream_name, response_time, error_message = timeout
-            st.caption(f"**{timestamp}** - {stream_name}: {response_time:.2f}s timeout - {error_message or 'No error message'}")
-else:
-    st.info("No timeout data available yet. Timeout information will appear after monitoring begins.")
+def _calculate_uptime_today(stream_name: str, schedule_minutes: int = 1050) -> Tuple[float, float]:
+    """Return (uptime_percentage, total_downtime_minutes) for today in schedule TZ.
+    Uses today's downtime periods and applies: (schedule_minutes - total_downtime_minutes) / schedule_minutes.
+    """
+    downtime_data = get_downtime_periods() or {}
+    periods = downtime_data.get(stream_name) or []
+    today_periods = [p for p in periods if _interval_overlaps_today(p['start'], p['end'])]
+    total_downtime_seconds = sum(p.get('duration_seconds', 0.0) for p in today_periods)
+    total_downtime_minutes = max(0.0, total_downtime_seconds / 60.0)
+    total_downtime_minutes = min(total_downtime_minutes, float(schedule_minutes))
+    uptime_percentage = 0.0 if schedule_minutes <= 0 else max(0.0, (float(schedule_minutes) - total_downtime_minutes) / float(schedule_minutes) * 100.0)
+    return uptime_percentage, total_downtime_minutes
+
+uptime_pct, downtime_mins = _calculate_uptime_today('Website', 1050)
+st.metric(
+    label="Website Uptime (today)",
+    value=f"{uptime_pct:.1f}%",
+    delta=f"Downtime: {downtime_mins:.1f} min"
+)
+
+#
 
 # Display downtime periods (Website only, recent first) - Today only
 st.markdown("---")
@@ -643,15 +611,27 @@ if downtime_data and 'Website' in downtime_data:
 else:
     st.info("No downtime data available yet. Downtime information will appear after monitoring begins.")
 
-# Export functionality
+# Timeout Analysis (Today) - recent first, placed below downtime events
+st.markdown("---")
+st.markdown("### ⏱️ Timeout Analysis (Today)")
+timeout_data = get_timeout_stats()
+if timeout_data and timeout_data[1]:
+    _, recent_timeouts = timeout_data
+    st.markdown("#### 🔍 Recent Timeouts (most recent first)")
+    for timeout in recent_timeouts:
+        timestamp, stream_name, response_time, error_message = timeout
+        st.caption(f"**{timestamp}** - {stream_name}: {response_time:.2f}s timeout - {error_message or 'No error message'}")
+else:
+    st.info("No timeout data available yet. Timeout information will appear after monitoring begins.")
+
+# Export functionality (simplified)
 st.markdown("---")
 st.markdown("### 📊 Export Data")
 
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
-    # ZIP (combined CSV) export
-    if st.button("📦 Export ZIP (CSV)", type="primary"):
+    if st.button("📦 Export ZIP (CSV)"):
         zip_bytes = export_zip_combined_csv()
         st.download_button(
             label="📥 Download ZIP",
@@ -661,8 +641,7 @@ with col1:
         )
 
 with col2:
-    # Single CSV export (combined)
-    if st.button("📄 Export CSV (Combined)", type="secondary"):
+    if st.button("📄 Export CSV (Combined)"):
         csv_text = export_csv_combined()
         st.download_button(
             label="📥 Download CSV",
@@ -670,37 +649,3 @@ with col2:
             file_name=f"uptime_report_combined_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv"
         )
-
-with col3:
-    st.caption("💡 Export (no pandas/openpyxl):\n• ZIP with combined CSV (periods + daily totals)\n• Single CSV with combined data")
-
-st.markdown("---")
-st.markdown(f"🔁 Auto-refresh every {REFRESH_INTERVAL} seconds | Manual refresh button available")
-
-# Installation note for better auto-refresh
-if not st_autorefresh:
-    with st.expander("💡 Improve Auto-Refresh Performance"):
-        st.markdown("""
-        **For smoother auto-refresh without page reloads:**
-        
-        ```bash
-        pip install streamlit-autorefresh
-        ```
-        
-        Then restart your Streamlit app. This will provide a much better user experience.
-        """)
-
-# Export requirements note
-with st.expander("📋 Export Requirements"):
-    st.markdown("""
-    **Required packages for Excel/CSV export:**
-    
-    ```bash
-    pip install pandas openpyxl
-    ```
-    
-    These packages are already included in requirements.txt and enable:
-    - Excel export with downtime periods
-    - CSV export for downtime analysis
-    - Detailed outage information
-    """)
