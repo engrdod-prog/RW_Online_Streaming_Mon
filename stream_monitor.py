@@ -480,6 +480,18 @@ init_database()
 
 st.title("📡 Online Stream Uptime Monitor")
 
+# Quick shortcut to open the Website stream in a new browser tab
+st.markdown(
+    '<a href="http://in-icecast.eradioportal.com:8000/rwluzon" target="_blank" rel="noopener noreferrer">▶️ Open RW Online Streaming in new tab</a>',
+    unsafe_allow_html=True,
+)
+
+# Shortcut to open the Icecast2 Status page in a new browser tab
+st.markdown(
+    '<a href="http://in-icecast.eradioportal.com:8000" target="_blank" rel="noopener noreferrer">📄 Open Icecast2 Status in new tab</a>',
+    unsafe_allow_html=True,
+)
+
 st.write(f"⏰ Schedule: {', '.join(SCHEDULE['days'])} from {SCHEDULE['start_time']} to {SCHEDULE['end_time']} ({SCHEDULE['timezone']})")
 within_schedule = is_within_schedule()
 
