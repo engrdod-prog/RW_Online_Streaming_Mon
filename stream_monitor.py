@@ -2,13 +2,15 @@
 
 import streamlit as st
 import requests
-from datetime import datetime, time as dt_time
+from datetime import datetime, time as dt_time, timedelta
 import pytz
 import json
 import sqlite3
 import os
-import pandas as pd
 import io
+import csv
+import zipfile
+from typing import Optional, Dict, Tuple, Any
 from requests.exceptions import RequestException, Timeout, SSLError, ConnectionError
 from urllib.parse import urlparse, urlunparse
 
@@ -366,7 +368,7 @@ def format_duration(seconds):
         hours = seconds / 3600
         return f"{hours:.1f}h"
 
-def _get_today_bounds() -> tuple[datetime, datetime, pytz.BaseTzInfo]:
+def _get_today_bounds() -> Tuple[datetime, datetime, Any]:
     """Return (start_of_today, end_of_today, tz) in the configured timezone."""
     tz = pytz.timezone(SCHEDULE["timezone"])
     now_tz = datetime.now(tz)
@@ -374,7 +376,7 @@ def _get_today_bounds() -> tuple[datetime, datetime, pytz.BaseTzInfo]:
     end = start.replace(hour=23, minute=59, second=59, microsecond=999999)
     return start, end, tz
 
-def _parse_iso_to_tz(dt_iso: str, tz: pytz.BaseTzInfo) -> datetime | None:
+def _parse_iso_to_tz(dt_iso: str, tz: Any) -> Optional[datetime]:
     try:
         # Support stored timestamps with offset (e.g., +08:00) or 'Z'
         dt = datetime.fromisoformat(dt_iso.replace('Z', '+00:00'))
@@ -392,11 +394,11 @@ def _interval_overlaps_today(start_iso: str, end_iso: str) -> bool:
         return False
     return max(start_dt, start_today) <= min(end_dt, end_today)
 
-def _split_duration_by_day(start_iso: str, end_iso: str, duration_seconds: float) -> dict:
+def _split_duration_by_day(start_iso: str, end_iso: str, duration_seconds: float) -> Dict[str, float]:
     """Split a downtime interval across calendar days and return seconds per YYYY-MM-DD.
     Assumes ISO timestamps. If parsing fails, falls back to attributing all to the start date.
     """
-    per_day: dict[str, float] = {}
+    per_day: Dict[str, float] = {}
     try:
         start_dt = datetime.fromisoformat(start_iso.replace('Z', '+00:00'))
         if end_iso == 'Ongoing':
@@ -426,142 +428,50 @@ def _split_duration_by_day(start_iso: str, end_iso: str, duration_seconds: float
         per_day[date_key] = per_day.get(date_key, 0.0) + float(duration_seconds or 0.0)
     return per_day
 
-def export_downtime_data():
-    """Export downtime data to Excel and CSV formats"""
-    if not LOGGING_CONFIG["log_to_database"]:
-        return None, None
+def export_csv_combined() -> str:
+    """Build a single CSV with both Downtime_Periods and Daily_Totals sections."""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    data = get_downtime_periods() or {}
     
-    conn = sqlite3.connect(LOGGING_CONFIG["database_path"])
+    # Section 1: Downtime_Periods
+    writer.writerow(["=== DOWNTIME PERIODS ==="])
+    writer.writerow(["Stream Name", "Start Time", "End Time", "Duration (seconds)", "Duration (formatted)", "Error Message"])
+    daily_totals: Dict[Tuple[str, str], float] = {}
+    for stream_name, periods in data.items():
+        for p in periods:
+            writer.writerow([
+                stream_name,
+                p.get("start", ""),
+                p.get("end", ""),
+                p.get("duration_seconds", 0),
+                p.get("duration_formatted", ""),
+                p.get("error_message") or "No error message",
+            ])
+            # Accumulate daily totals
+            per_day = _split_duration_by_day(p.get("start", ""), p.get("end", ""), float(p.get("duration_seconds", 0) or 0))
+            for date_key, seconds in per_day.items():
+                key = (stream_name, date_key)
+                daily_totals[key] = daily_totals.get(key, 0.0) + seconds
     
-    # Get all uptime logs for export
-    query = '''
-        SELECT 
-            timestamp,
-            stream_name,
-            status,
-            response_time,
-            error_message,
-            timezone
-        FROM uptime_logs 
-        ORDER BY timestamp DESC
-    '''
+    # Section 2: Daily_Totals
+    writer.writerow([])  # Empty row separator
+    writer.writerow(["=== DAILY TOTALS ==="])
+    writer.writerow(["Stream Name", "Date", "Total Downtime (seconds)", "Total Downtime (formatted)"])
+    for (stream_name, date_key), seconds in sorted(daily_totals.items(), key=lambda x: (x[0][0], x[0][1])):
+        writer.writerow([stream_name, date_key, int(seconds), format_duration(seconds)])
     
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    
-    if df.empty:
-        return None, None
-    
-    # Create Excel file with only Downtime_Periods
-    excel_buffer = io.BytesIO()
-    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-        # Downtime periods sheet only
-        downtime_periods = get_downtime_periods()
-        if downtime_periods:
-            downtime_data = []
-            # Accumulator for daily totals per stream
-            daily_totals: dict[tuple[str, str], float] = {}
-            for stream_name, periods in downtime_periods.items():
-                for period in periods:
-                    downtime_data.append({
-                        'Stream Name': stream_name,
-                        'Start Time': period['start'],
-                        'End Time': period['end'],
-                        'Duration (seconds)': period['duration_seconds'],
-                        'Duration (formatted)': period['duration_formatted'],
-                        'Error Message': period['error_message'] or 'No error message'
-                    })
-                    # Split duration across days
-                    per_day = _split_duration_by_day(period['start'], period['end'], period['duration_seconds'])
-                    for date_key, seconds in per_day.items():
-                        key = (stream_name, date_key)
-                        daily_totals[key] = daily_totals.get(key, 0.0) + seconds
-            
-            if downtime_data:
-                downtime_df = pd.DataFrame(downtime_data)
-                downtime_df.to_excel(writer, sheet_name='Downtime_Periods', index=False)
-                # Build Daily Totals sheet
-                if daily_totals:
-                    daily_rows = [
-                        {
-                            'Stream Name': k[0],
-                            'Date': k[1],
-                            'Total Downtime (seconds)': v,
-                            'Total Downtime (formatted)': format_duration(v)
-                        }
-                        for k, v in sorted(daily_totals.items(), key=lambda x: (x[0][0], x[0][1]))
-                    ]
-                    daily_df = pd.DataFrame(daily_rows)
-                    daily_df.to_excel(writer, sheet_name='Daily_Totals', index=False)
-            else:
-                # Create empty sheet if no downtime data
-                empty_df = pd.DataFrame(columns=['Stream Name', 'Start Time', 'End Time', 'Duration (seconds)', 'Duration (formatted)', 'Error Message'])
-                empty_df.to_excel(writer, sheet_name='Downtime_Periods', index=False)
-    
-    excel_buffer.seek(0)
-    excel_data = excel_buffer.getvalue()
-    
-    # Create CSV file with downtime periods AND daily totals (two CSVs concatenated with a header separator)
-    csv_buffer = io.StringIO()
-    downtime_periods = get_downtime_periods()
-    if downtime_periods:
-        # Build downtime periods CSV
-        downtime_data = []
-        daily_totals: dict[tuple[str, str], float] = {}
-        for stream_name, periods in downtime_periods.items():
-            for period in periods:
-                downtime_data.append({
-                    'Stream Name': stream_name,
-                    'Start Time': period['start'],
-                    'End Time': period['end'],
-                    'Duration (seconds)': period['duration_seconds'],
-                    'Duration (formatted)': period['duration_formatted'],
-                    'Error Message': period['error_message'] or 'No error message'
-                })
-                # accumulate daily totals
-                per_day = _split_duration_by_day(period['start'], period['end'], period['duration_seconds'])
-                for date_key, seconds in per_day.items():
-                    key = (stream_name, date_key)
-                    daily_totals[key] = daily_totals.get(key, 0.0) + seconds
+    return output.getvalue()
 
-        if downtime_data:
-            downtime_df = pd.DataFrame(downtime_data)
-            csv_buffer.write("Downtime_Periods\n")
-            downtime_df.to_csv(csv_buffer, index=False)
-        else:
-            csv_buffer.write("Downtime_Periods\n")
-            empty_df = pd.DataFrame(columns=['Stream Name', 'Start Time', 'End Time', 'Duration (seconds)', 'Duration (formatted)', 'Error Message'])
-            empty_df.to_csv(csv_buffer, index=False)
+def export_zip_combined_csv() -> bytes:
+    """Create a ZIP containing a single combined CSV file."""
+    combined_csv = export_csv_combined()
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("uptime_report_combined.csv", combined_csv)
+    return zip_buffer.getvalue()
 
-        # Append daily totals
-        csv_buffer.write("\nDaily_Totals\n")
-        if daily_totals:
-            daily_rows = [
-                {
-                    'Stream Name': k[0],
-                    'Date': k[1],
-                    'Total Downtime (seconds)': v,
-                    'Total Downtime (formatted)': format_duration(v)
-                }
-                for k, v in sorted(daily_totals.items(), key=lambda x: (x[0][0], x[0][1]))
-            ]
-            daily_df = pd.DataFrame(daily_rows)
-            daily_df.to_csv(csv_buffer, index=False)
-        else:
-            empty_daily = pd.DataFrame(columns=['Stream Name', 'Date', 'Total Downtime (seconds)', 'Total Downtime (formatted)'])
-            empty_daily.to_csv(csv_buffer, index=False)
-    else:
-        # No downtime periods
-        empty_df = pd.DataFrame(columns=['Stream Name', 'Start Time', 'End Time', 'Duration (seconds)', 'Duration (formatted)', 'Error Message'])
-        csv_buffer.write("Downtime_Periods\n")
-        empty_df.to_csv(csv_buffer, index=False)
-        csv_buffer.write("\nDaily_Totals\n")
-        empty_daily = pd.DataFrame(columns=['Stream Name', 'Date', 'Total Downtime (seconds)', 'Total Downtime (formatted)'])
-        empty_daily.to_csv(csv_buffer, index=False)
-
-    csv_data = csv_buffer.getvalue()
-    
-    return excel_data, csv_data
+## JSON export removed per request
 
 # --- Streamlit App ---
 st.set_page_config(page_title="Stream Uptime Monitor", layout="wide")
@@ -740,33 +650,29 @@ st.markdown("### 📊 Export Data")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("📈 Export to Excel", type="primary"):
-        excel_data, csv_data = export_downtime_data()
-        if excel_data:
-            st.download_button(
-                label="📥 Download Excel File",
-                data=excel_data,
-                file_name=f"uptime_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-        else:
-            st.warning("No data available for export")
+    # ZIP (combined CSV) export
+    if st.button("📦 Export ZIP (CSV)", type="primary"):
+        zip_bytes = export_zip_combined_csv()
+        st.download_button(
+            label="📥 Download ZIP",
+            data=zip_bytes,
+            file_name=f"uptime_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+            mime="application/zip"
+        )
 
 with col2:
-    if st.button("📄 Export to CSV", type="secondary"):
-        excel_data, csv_data = export_downtime_data()
-        if csv_data:
-            st.download_button(
-                label="📥 Download CSV File",
-                data=csv_data,
-                file_name=f"uptime_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv"
-            )
-        else:
-            st.warning("No data available for export")
+    # Single CSV export (combined)
+    if st.button("📄 Export CSV (Combined)", type="secondary"):
+        csv_text = export_csv_combined()
+        st.download_button(
+            label="📥 Download CSV",
+            data=csv_text,
+            file_name=f"uptime_report_combined_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv"
+        )
 
 with col3:
-    st.caption("💡 Export includes:\n• Downtime periods only\n• Start/end times\n• Duration analysis")
+    st.caption("💡 Export (no pandas/openpyxl):\n• ZIP with combined CSV (periods + daily totals)\n• Single CSV with combined data")
 
 st.markdown("---")
 st.markdown(f"🔁 Auto-refresh every {REFRESH_INTERVAL} seconds | Manual refresh button available")
