@@ -542,9 +542,9 @@ if "last_icecast_meta" in st.session_state:
     s = st.session_state["last_icecast_meta"]
     st.caption(f"Website mount: listeners={s.get('listeners')} bitrate={s.get('bitrate') or s.get('ice-bitrate')} type={s.get('server_type')}")
 
-# Uptime (Today) using (1050 mins - total downtime mins) / 1050
+# Uptime Statistics (Today) using (1050 mins - total downtime mins) / 1050
 st.markdown("---")
-st.markdown("### 📊 Uptime (Today)")
+st.markdown("### 📊 Uptime Statistics (Today)")
 
 def _calculate_uptime_today(stream_name: str, schedule_minutes: int = 1050) -> Tuple[float, float]:
     """Return (uptime_percentage, total_downtime_minutes) for today in schedule TZ.
@@ -559,12 +559,14 @@ def _calculate_uptime_today(stream_name: str, schedule_minutes: int = 1050) -> T
     uptime_percentage = 0.0 if schedule_minutes <= 0 else max(0.0, (float(schedule_minutes) - total_downtime_minutes) / float(schedule_minutes) * 100.0)
     return uptime_percentage, total_downtime_minutes
 
-uptime_pct, downtime_mins = _calculate_uptime_today('Website', 1050)
-st.metric(
-    label="Website Uptime (today)",
-    value=f"{uptime_pct:.1f}%",
-    delta=f"Downtime: {downtime_mins:.1f} min"
-)
+for stream in STREAMS:
+    name = stream.get('name', 'Stream')
+    uptime_pct, downtime_mins = _calculate_uptime_today(name, 1050)
+    st.metric(
+        label=f"{name} Uptime (today)",
+        value=f"{uptime_pct:.1f}%",
+        delta=f"Downtime: {downtime_mins:.1f} min"
+    )
 
 #
 
