@@ -13,6 +13,7 @@ import zipfile
 from typing import Optional, Dict, Tuple, Any
 from requests.exceptions import RequestException, Timeout, SSLError, ConnectionError
 from urllib.parse import urlparse, urlunparse
+from pathlib import Path
 
 try:
     from streamlit_autorefresh import st_autorefresh
@@ -44,6 +45,33 @@ LOGGING_CONFIG = {
 }
 
 # --- Helper Functions ---
+def get_downloads_folder():
+    """Get the Downloads folder path for the current user on Mac/Windows."""
+    try:
+        # Get the user's home directory
+        home = Path.home()
+        
+        # Check for Downloads folder in common locations
+        downloads_paths = [
+            home / "Downloads",  # Standard location
+            home / "downloads",  # Lowercase variant
+        ]
+        
+        # Try to find existing Downloads folder
+        for path in downloads_paths:
+            if path.exists() and path.is_dir():
+                return str(path)
+        
+        # If Downloads folder doesn't exist, create it in the standard location
+        downloads_folder = home / "Downloads"
+        downloads_folder.mkdir(exist_ok=True)
+        return str(downloads_folder)
+        
+    except Exception as e:
+        print(f"Error getting Downloads folder: {e}")
+        # Fallback to current directory
+        return "."
+
 def is_within_schedule():
     tz = pytz.timezone(SCHEDULE["timezone"])
     now = datetime.now(tz)
@@ -546,9 +574,9 @@ def save_daily_csv_export(export_dir=None):
         date_str = now.strftime("%Y%m%d")
         time_str = now.strftime("%H%M%S")
         
-        # Use provided directory or default to daily_exports
+        # Use provided directory or default to Downloads folder
         if export_dir is None:
-            export_dir = "daily_exports"
+            export_dir = get_downloads_folder()
         
         # Create exports directory if it doesn't exist
         if not os.path.exists(export_dir):
@@ -588,9 +616,9 @@ def should_export_daily_report(export_dir=None):
         time_diff = abs((current_time.hour * 3600 + current_time.minute * 60 + current_time.second) - 
                        (target_time.hour * 3600 + target_time.minute * 60))
         
-        # Use provided directory or default to daily_exports
+        # Use provided directory or default to Downloads folder
         if export_dir is None:
-            export_dir = "daily_exports"
+            export_dir = get_downloads_folder()
         
         # Check if we haven't already exported today
         if os.path.exists(export_dir):
@@ -615,35 +643,7 @@ init_database()
 
 st.title("📡 Online Stream Uptime Monitor")
 
-# Export Directory Configuration
-st.markdown("---")
-st.markdown("### ⚙️ Export Settings")
-
-# Initialize export directory in session state
-if 'export_directory' not in st.session_state:
-    st.session_state.export_directory = "daily_exports"
-
-col1, col2 = st.columns([2, 1])
-with col1:
-    export_dir = st.text_input(
-        "📁 Export Directory Path:",
-        value=st.session_state.export_directory,
-        help="Directory where daily CSV exports will be saved. Use absolute path for best results.",
-        placeholder="e.g., /Users/username/Documents/stream_reports or daily_exports"
-    )
-with col2:
-    if st.button("💾 Save Directory"):
-        if export_dir.strip():
-            st.session_state.export_directory = export_dir.strip()
-            st.success(f"✅ Export directory set to: {st.session_state.export_directory}")
-        else:
-            st.error("❌ Please enter a valid directory path")
-
-# Show current export directory
-st.caption(f"Current export directory: `{st.session_state.export_directory}`")
-
 # Quick shortcut to open the Website stream in a new browser tab
-st.markdown("---")
 st.markdown(
     '<a href="http://in-icecast.eradioportal.com:8000/rwluzon" target="_blank" rel="noopener noreferrer">▶️ Open RW Online Streaming in new tab</a>',
     unsafe_allow_html=True,
@@ -714,11 +714,11 @@ for stream in STREAMS:
             st.info("Not checked (outside schedule)")
 
 # Check for automatic daily export at 22:00
-if should_export_daily_report(st.session_state.export_directory):
-    csv_file, zip_file = save_daily_csv_export(st.session_state.export_directory)
+if should_export_daily_report():
+    csv_file, zip_file = save_daily_csv_export()
     if csv_file and zip_file:
         st.success(f"📊 Daily report automatically exported at 22:00!")
-        st.caption(f"Files saved: {csv_file}, {zip_file}")
+        st.caption(f"Files saved to Downloads folder: {os.path.basename(csv_file)}, {os.path.basename(zip_file)}")
     else:
         st.error("❌ Failed to export daily report")
 
@@ -815,7 +815,9 @@ st.markdown("---")
 st.markdown("### 📊 Export Data")
 
 # Show automatic export status
-st.info(f"🕙 **Automatic Export**: Daily reports are automatically saved at 22:00 (10:00 PM) to the `{st.session_state.export_directory}/` folder")
+downloads_path = get_downloads_folder()
+st.info(f"🕙 **Automatic Export**: Daily reports are automatically saved at 22:00 (10:00 PM) to your Downloads folder")
+st.caption(f"Downloads folder: `{downloads_path}`")
 
 col1, col2 = st.columns(2)
 
@@ -839,24 +841,25 @@ with col2:
             mime="text/csv"
         )
 
-# Test export to configured directory
+# Test export to Downloads folder
 st.markdown("#### 🧪 Test Export")
-if st.button("💾 Test Export to Configured Directory"):
+if st.button("💾 Test Export to Downloads Folder"):
     try:
-        csv_file, zip_file = save_daily_csv_export(st.session_state.export_directory)
+        csv_file, zip_file = save_daily_csv_export()
         if csv_file and zip_file:
             st.success(f"✅ Test export successful!")
-            st.caption(f"CSV: {csv_file}")
-            st.caption(f"ZIP: {zip_file}")
+            st.caption(f"CSV: {os.path.basename(csv_file)}")
+            st.caption(f"ZIP: {os.path.basename(zip_file)}")
+            st.caption(f"Location: {os.path.dirname(csv_file)}")
         else:
             st.error("❌ Test export failed")
     except Exception as e:
         st.error(f"❌ Test export error: {str(e)}")
 
-# Show existing daily exports
-exports_dir = st.session_state.export_directory
+# Show existing daily exports from Downloads folder
+exports_dir = get_downloads_folder()
 if os.path.exists(exports_dir):
-    export_files = [f for f in os.listdir(exports_dir) if f.endswith(('.csv', '.zip'))]
+    export_files = [f for f in os.listdir(exports_dir) if f.startswith("uptime_report_") and f.endswith(('.csv', '.zip'))]
     if export_files:
         st.markdown("#### 📁 Recent Daily Exports")
         # Sort by modification time, newest first
@@ -867,4 +870,4 @@ if os.path.exists(exports_dir):
             file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
             st.caption(f"📄 {file} ({file_size:,} bytes) - {file_time.strftime('%Y-%m-%d %H:%M:%S')}")
 else:
-    st.caption(f"📁 Export directory `{exports_dir}` does not exist yet. Files will be created when first export occurs.")
+    st.caption(f"📁 Downloads folder not found. Files will be saved to: `{exports_dir}`")
