@@ -538,6 +538,74 @@ def export_zip_combined_csv() -> bytes:
         zf.writestr("uptime_report_combined.csv", combined_csv)
     return zip_buffer.getvalue()
 
+def save_daily_csv_export(export_dir=None):
+    """Save daily CSV export to disk with timestamp."""
+    try:
+        tz = pytz.timezone(SCHEDULE["timezone"])
+        now = datetime.now(tz)
+        date_str = now.strftime("%Y%m%d")
+        time_str = now.strftime("%H%M%S")
+        
+        # Use provided directory or default to daily_exports
+        if export_dir is None:
+            export_dir = "daily_exports"
+        
+        # Create exports directory if it doesn't exist
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        
+        # Generate CSV content
+        csv_content = export_csv_combined()
+        
+        # Save CSV file
+        csv_filename = os.path.join(export_dir, f"uptime_report_{date_str}_{time_str}.csv")
+        with open(csv_filename, 'w', encoding='utf-8') as f:
+            f.write(csv_content)
+        
+        # Also save ZIP file
+        zip_content = export_zip_combined_csv()
+        zip_filename = os.path.join(export_dir, f"uptime_report_{date_str}_{time_str}.zip")
+        with open(zip_filename, 'wb') as f:
+            f.write(zip_content)
+        
+        print(f"Daily export saved: {csv_filename} and {zip_filename}")
+        return csv_filename, zip_filename
+        
+    except Exception as e:
+        print(f"Error saving daily export: {e}")
+        return None, None
+
+def should_export_daily_report(export_dir=None):
+    """Check if it's time to export the daily report (at 22:00)."""
+    try:
+        tz = pytz.timezone(SCHEDULE["timezone"])
+        now = datetime.now(tz)
+        current_time = now.time()
+        current_date = now.date()
+        
+        # Check if it's exactly 22:00 (within 30 seconds tolerance)
+        target_time = SCHEDULE["end_time"]
+        time_diff = abs((current_time.hour * 3600 + current_time.minute * 60 + current_time.second) - 
+                       (target_time.hour * 3600 + target_time.minute * 60))
+        
+        # Use provided directory or default to daily_exports
+        if export_dir is None:
+            export_dir = "daily_exports"
+        
+        # Check if we haven't already exported today
+        if os.path.exists(export_dir):
+            date_str = current_date.strftime("%Y%m%d")
+            existing_files = [f for f in os.listdir(export_dir) if f.startswith(f"uptime_report_{date_str}")]
+            if existing_files:
+                return False  # Already exported today
+        
+        # Export if it's within 30 seconds of 22:00
+        return time_diff <= 30
+        
+    except Exception as e:
+        print(f"Error checking export time: {e}")
+        return False
+
 ## JSON export removed per request
 
 # --- Streamlit App ---
@@ -547,7 +615,35 @@ init_database()
 
 st.title("📡 Online Stream Uptime Monitor")
 
+# Export Directory Configuration
+st.markdown("---")
+st.markdown("### ⚙️ Export Settings")
+
+# Initialize export directory in session state
+if 'export_directory' not in st.session_state:
+    st.session_state.export_directory = "daily_exports"
+
+col1, col2 = st.columns([2, 1])
+with col1:
+    export_dir = st.text_input(
+        "📁 Export Directory Path:",
+        value=st.session_state.export_directory,
+        help="Directory where daily CSV exports will be saved. Use absolute path for best results.",
+        placeholder="e.g., /Users/username/Documents/stream_reports or daily_exports"
+    )
+with col2:
+    if st.button("💾 Save Directory"):
+        if export_dir.strip():
+            st.session_state.export_directory = export_dir.strip()
+            st.success(f"✅ Export directory set to: {st.session_state.export_directory}")
+        else:
+            st.error("❌ Please enter a valid directory path")
+
+# Show current export directory
+st.caption(f"Current export directory: `{st.session_state.export_directory}`")
+
 # Quick shortcut to open the Website stream in a new browser tab
+st.markdown("---")
 st.markdown(
     '<a href="http://in-icecast.eradioportal.com:8000/rwluzon" target="_blank" rel="noopener noreferrer">▶️ Open RW Online Streaming in new tab</a>',
     unsafe_allow_html=True,
@@ -616,6 +712,15 @@ for stream in STREAMS:
             st.success("✅ Online" if status else "❌ Offline")
         else:
             st.info("Not checked (outside schedule)")
+
+# Check for automatic daily export at 22:00
+if should_export_daily_report(st.session_state.export_directory):
+    csv_file, zip_file = save_daily_csv_export(st.session_state.export_directory)
+    if csv_file and zip_file:
+        st.success(f"📊 Daily report automatically exported at 22:00!")
+        st.caption(f"Files saved: {csv_file}, {zip_file}")
+    else:
+        st.error("❌ Failed to export daily report")
 
 if "last_icecast_meta" in st.session_state:
     s = st.session_state["last_icecast_meta"]
@@ -709,6 +814,9 @@ else:
 st.markdown("---")
 st.markdown("### 📊 Export Data")
 
+# Show automatic export status
+st.info(f"🕙 **Automatic Export**: Daily reports are automatically saved at 22:00 (10:00 PM) to the `{st.session_state.export_directory}/` folder")
+
 col1, col2 = st.columns(2)
 
 with col1:
@@ -730,3 +838,33 @@ with col2:
             file_name=f"uptime_report_combined_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv"
         )
+
+# Test export to configured directory
+st.markdown("#### 🧪 Test Export")
+if st.button("💾 Test Export to Configured Directory"):
+    try:
+        csv_file, zip_file = save_daily_csv_export(st.session_state.export_directory)
+        if csv_file and zip_file:
+            st.success(f"✅ Test export successful!")
+            st.caption(f"CSV: {csv_file}")
+            st.caption(f"ZIP: {zip_file}")
+        else:
+            st.error("❌ Test export failed")
+    except Exception as e:
+        st.error(f"❌ Test export error: {str(e)}")
+
+# Show existing daily exports
+exports_dir = st.session_state.export_directory
+if os.path.exists(exports_dir):
+    export_files = [f for f in os.listdir(exports_dir) if f.endswith(('.csv', '.zip'))]
+    if export_files:
+        st.markdown("#### 📁 Recent Daily Exports")
+        # Sort by modification time, newest first
+        export_files.sort(key=lambda x: os.path.getmtime(os.path.join(exports_dir, x)), reverse=True)
+        for file in export_files[:5]:  # Show last 5 exports
+            file_path = os.path.join(exports_dir, file)
+            file_size = os.path.getsize(file_path)
+            file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
+            st.caption(f"📄 {file} ({file_size:,} bytes) - {file_time.strftime('%Y-%m-%d %H:%M:%S')}")
+else:
+    st.caption(f"📁 Export directory `{exports_dir}` does not exist yet. Files will be created when first export occurs.")
