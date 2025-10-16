@@ -841,21 +841,6 @@ with col2:
             mime="text/csv"
         )
 
-# Test export to Downloads folder
-st.markdown("#### 🧪 Test Export")
-if st.button("💾 Test Export to Downloads Folder"):
-    try:
-        csv_file, zip_file = save_daily_csv_export()
-        if csv_file and zip_file:
-            st.success(f"✅ Test export successful!")
-            st.caption(f"CSV: {os.path.basename(csv_file)}")
-            st.caption(f"ZIP: {os.path.basename(zip_file)}")
-            st.caption(f"Location: {os.path.dirname(csv_file)}")
-        else:
-            st.error("❌ Test export failed")
-    except Exception as e:
-        st.error(f"❌ Test export error: {str(e)}")
-
 # Show existing daily exports from Downloads folder
 exports_dir = get_downloads_folder()
 if os.path.exists(exports_dir):
