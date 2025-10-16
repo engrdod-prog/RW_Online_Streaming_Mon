@@ -655,20 +655,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.write(f"⏰ Schedule: {', '.join(SCHEDULE['days'])} from {SCHEDULE['start_time']} to {SCHEDULE['end_time']} ({SCHEDULE['timezone']})")
+st.write(f"⏰ **Schedule**: {', '.join(SCHEDULE['days'])} from {SCHEDULE['start_time']} to {SCHEDULE['end_time']} ({SCHEDULE['timezone']})")
 within_schedule = is_within_schedule()
 
-st.markdown(f"### Current Status: {'🟢 Monitoring' if within_schedule else '⚪ Outside Schedule'}")
+st.markdown(f"### Status: {'🟢 Monitoring' if within_schedule else '⚪ Outside Schedule'}")
 
-# Manual refresh button and status
-col1, col2 = st.columns([1, 3])
-with col1:
-    if st.button("🔄 Refresh Now", type="secondary"):
-        st.rerun()
-with col2:
-    if not st_autorefresh:
-        st.warning("⚠️ Auto-refresh active (page reload)")
-        st.caption("Install 'streamlit-autorefresh' for smoother experience")
+# Manual refresh button
+if st.button("🔄 Refresh Now", type="secondary"):
+    st.rerun()
+
+if not st_autorefresh:
+    st.caption("Auto-refresh every 30 seconds")
 
 # Auto-refresh implementation
 if st_autorefresh:
@@ -678,9 +675,8 @@ else:
     st.markdown(f"""
     <meta http-equiv="refresh" content="{REFRESH_INTERVAL}">
     """, unsafe_allow_html=True)
-    st.caption(f"⏰ Auto-refresh every {REFRESH_INTERVAL} seconds (browser reload)")
 
-# Optional: show last checked timestamp (in schedule TZ)
+# Show last checked timestamp
 tz = pytz.timezone(SCHEDULE["timezone"])
 st.caption(f"Last checked: {datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
@@ -726,9 +722,9 @@ if "last_icecast_meta" in st.session_state:
     s = st.session_state["last_icecast_meta"]
     st.caption(f"Website mount: listeners={s.get('listeners')} bitrate={s.get('bitrate') or s.get('ice-bitrate')} type={s.get('server_type')}")
 
-# Uptime Statistics (Today) using (1050 mins - total downtime mins) / 1050
+# Uptime Statistics
 st.markdown("---")
-st.markdown("### 📊 Uptime Statistics (Today)")
+st.markdown("### 📊 Uptime Statistics")
 
 def _calculate_uptime_today(stream_name: str, schedule_minutes: int = 1050) -> Tuple[float, float]:
     """Return (uptime_percentage, total_downtime_minutes) for today in schedule TZ.
@@ -754,9 +750,9 @@ for stream in STREAMS:
 
 #
 
-# Display downtime periods (Website only, recent first) - Today only
+# Display downtime periods
 st.markdown("---")
-st.markdown("### 🔴 Website Downtime Events (Today, Recent First)")
+st.markdown("### 🔴 Downtime Events")
 downtime_data = get_downtime_periods()
 if downtime_data and 'Website' in downtime_data:
     periods = downtime_data.get('Website') or []
@@ -793,36 +789,34 @@ if downtime_data and 'Website' in downtime_data:
                 f"({period['duration_formatted']}) - {period['error_message'] or 'No error message'}"
             )
     else:
-        st.success("✅ Website: No downtime periods in the last 24 hours!")
+        st.success("✅ No downtime periods today!")
 else:
-    st.info("No downtime data available yet. Downtime information will appear after monitoring begins.")
+    st.info("No downtime data available yet.")
 
-# Timeout Analysis (Today) - recent first, placed below downtime events
+# Timeout Analysis
 st.markdown("---")
-st.markdown("### ⏱️ Timeout Analysis (Today)")
+st.markdown("### ⏱️ Timeout Analysis")
 timeout_data = get_timeout_stats()
 if timeout_data and timeout_data[1]:
     _, recent_timeouts = timeout_data
-    st.markdown("#### 🔍 Recent Timeouts (most recent first)")
+    st.markdown("#### Recent Timeouts")
     for timeout in recent_timeouts:
         timestamp, stream_name, response_time, error_message = timeout
         st.caption(f"**{timestamp}** - {stream_name}: {response_time:.2f}s timeout - {error_message or 'No error message'}")
 else:
-    st.info("No timeout data available yet. Timeout information will appear after monitoring begins.")
+    st.info("No timeout data available yet.")
 
-# Export functionality (simplified)
+# Export functionality
 st.markdown("---")
-st.markdown("### 📊 Export Data")
+st.markdown("### 📊 Data Export")
 
 # Show automatic export status
-downloads_path = get_downloads_folder()
-st.info(f"🕙 **Automatic Export**: Daily reports are automatically saved at 22:00 (10:00 PM) to your Downloads folder")
-st.caption(f"Downloads folder: `{downloads_path}`")
+st.info("🕙 **Automatic Export**: Daily reports are automatically saved at 22:00 to your Downloads folder")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    if st.button("📦 Export ZIP (CSV)"):
+    if st.button("📦 Download ZIP"):
         zip_bytes = export_zip_combined_csv()
         st.download_button(
             label="📥 Download ZIP",
@@ -832,7 +826,7 @@ with col1:
         )
 
 with col2:
-    if st.button("📄 Export CSV (Combined)"):
+    if st.button("📄 Download CSV"):
         csv_text = export_csv_combined()
         st.download_button(
             label="📥 Download CSV",
@@ -841,18 +835,3 @@ with col2:
             mime="text/csv"
         )
 
-# Show existing daily exports from Downloads folder
-exports_dir = get_downloads_folder()
-if os.path.exists(exports_dir):
-    export_files = [f for f in os.listdir(exports_dir) if f.startswith("uptime_report_") and f.endswith(('.csv', '.zip'))]
-    if export_files:
-        st.markdown("#### 📁 Recent Daily Exports")
-        # Sort by modification time, newest first
-        export_files.sort(key=lambda x: os.path.getmtime(os.path.join(exports_dir, x)), reverse=True)
-        for file in export_files[:5]:  # Show last 5 exports
-            file_path = os.path.join(exports_dir, file)
-            file_size = os.path.getsize(file_path)
-            file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
-            st.caption(f"📄 {file} ({file_size:,} bytes) - {file_time.strftime('%Y-%m-%d %H:%M:%S')}")
-else:
-    st.caption(f"📁 Downloads folder not found. Files will be saved to: `{exports_dir}`")
