@@ -645,8 +645,8 @@ st.title("📡 Online Stream Uptime Monitor")
 
 # Quick shortcut to open the Website stream in a new browser tab
 st.markdown(
-    '<a>Created by RW Technical Department</a>',
-    unsafe_allow_html=False,
+    '<a style="font-size: 14px; color: #666; text-decoration:none; font-weight:bold;">Created by RW Technical Department</a>',
+    unsafe_allow_html=True,
 )
 st.markdown(
     '<a href="http://in-icecast.eradioportal.com:8000/rwluzon" target="_blank" rel="noopener noreferrer">▶️ Open RW Online Streaming in new tab</a>',
