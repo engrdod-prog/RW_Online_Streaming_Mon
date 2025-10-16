@@ -306,6 +306,7 @@ def get_downtime_periods():
     
     # Group events by stream and calculate downtime periods
     downtime_periods = {}
+    tz = pytz.timezone(SCHEDULE["timezone"])
     
     for stream_name in set(event[0] for event in all_events):
         stream_events = [event for event in all_events if event[0] == stream_name]
@@ -322,11 +323,35 @@ def get_downtime_periods():
                 try:
                     start_time = datetime.fromisoformat(current_downtime_start.replace('Z', '+00:00'))
                     end_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                    
+                    # Truncate downtime at schedule end time (22:00) if it extends beyond
+                    start_time_tz = start_time.astimezone(tz)
+                    end_time_tz = end_time.astimezone(tz)
+                    
+                    # If downtime starts before 22:00, truncate at 22:00
+                    if start_time_tz.time() < SCHEDULE["end_time"]:
+                        # Calculate the end of the day at 22:00 in the same timezone
+                        end_of_day = start_time_tz.replace(
+                            hour=SCHEDULE["end_time"].hour,
+                            minute=SCHEDULE["end_time"].minute,
+                            second=0,
+                            microsecond=0
+                        )
+                        
+                        # If the actual end time is after 22:00, truncate to 22:00
+                        if end_time_tz > end_of_day:
+                            end_time = end_of_day.astimezone(datetime.now().astimezone().tzinfo)
+                            end_timestamp = end_time.isoformat()
+                        else:
+                            end_timestamp = timestamp
+                    else:
+                        end_timestamp = timestamp
+                    
                     duration = (end_time - start_time).total_seconds()
                     
                     downtime_periods[stream_name].append({
                         'start': current_downtime_start,
-                        'end': timestamp,
+                        'end': end_timestamp,
                         'duration_seconds': duration,
                         'duration_formatted': format_duration(duration),
                         'error_message': error_message
@@ -342,14 +367,33 @@ def get_downtime_periods():
             if last_event[2] == 'offline':
                 try:
                     start_time = datetime.fromisoformat(current_downtime_start.replace('Z', '+00:00'))
-                    current_time = datetime.now()
-                    duration = (current_time - start_time).total_seconds()
+                    start_time_tz = start_time.astimezone(tz)
+                    
+                    # If downtime started before 22:00, end it at 22:00 instead of current time
+                    if start_time_tz.time() < SCHEDULE["end_time"]:
+                        # Calculate the end of the day at 22:00
+                        end_of_day = start_time_tz.replace(
+                            hour=SCHEDULE["end_time"].hour,
+                            minute=SCHEDULE["end_time"].minute,
+                            second=0,
+                            microsecond=0
+                        )
+                        end_time = end_of_day.astimezone(datetime.now().astimezone().tzinfo)
+                        end_timestamp = end_time.isoformat()
+                        duration = (end_time - start_time).total_seconds()
+                        is_ongoing = False
+                    else:
+                        # If downtime started after 22:00, use current time
+                        end_time = datetime.now()
+                        end_timestamp = 'Ongoing'
+                        duration = (end_time - start_time).total_seconds()
+                        is_ongoing = True
                     
                     downtime_periods[stream_name].append({
                         'start': current_downtime_start,
-                        'end': 'Ongoing',
+                        'end': end_timestamp,
                         'duration_seconds': duration,
-                        'duration_formatted': format_duration(duration) + ' (ongoing)',
+                        'duration_formatted': format_duration(duration) + (' (ongoing)' if is_ongoing else ' (ended at 22:00)'),
                         'error_message': last_event[4]
                     })
                 except:
@@ -396,6 +440,7 @@ def _interval_overlaps_today(start_iso: str, end_iso: str) -> bool:
 
 def _split_duration_by_day(start_iso: str, end_iso: str, duration_seconds: float) -> Dict[str, float]:
     """Split a downtime interval across calendar days and return seconds per YYYY-MM-DD.
+    Respects schedule end time (22:00) - downtime periods are truncated at 22:00 each day.
     Assumes ISO timestamps. If parsing fails, falls back to attributing all to the start date.
     """
     per_day: Dict[str, float] = {}
@@ -406,15 +451,37 @@ def _split_duration_by_day(start_iso: str, end_iso: str, duration_seconds: float
         else:
             end_dt = datetime.fromisoformat(end_iso.replace('Z', '+00:00'))
 
+        tz = pytz.timezone(SCHEDULE["timezone"])
         current = start_dt
+        
         while current < end_dt:
-            # end of current day
-            day_end = current.replace(hour=23, minute=59, second=59, microsecond=999999)
-            segment_end = min(day_end, end_dt)
+            # Convert to schedule timezone
+            current_tz = current.astimezone(tz)
+            
+            # End of current day at schedule end time (22:00)
+            day_end = current_tz.replace(
+                hour=SCHEDULE["end_time"].hour,
+                minute=SCHEDULE["end_time"].minute,
+                second=0,
+                microsecond=0
+            )
+            
+            # Convert back to UTC for comparison
+            day_end_utc = day_end.astimezone(datetime.now().astimezone().tzinfo)
+            segment_end = min(day_end_utc, end_dt)
             seg_seconds = (segment_end - current).total_seconds()
-            date_key = current.date().isoformat()
+            date_key = current_tz.date().isoformat()
             per_day[date_key] = per_day.get(date_key, 0.0) + max(seg_seconds, 0.0)
-            current = segment_end + timedelta(microseconds=1)
+            
+            # Move to next day at schedule start time (4:30 AM)
+            next_day = current_tz.replace(
+                hour=SCHEDULE["start_time"].hour,
+                minute=SCHEDULE["start_time"].minute,
+                second=0,
+                microsecond=0
+            ) + timedelta(days=1)
+            current = next_day.astimezone(datetime.now().astimezone().tzinfo)
+            
         # Normalize tiny rounding
         for k in list(per_day.keys()):
             if per_day[k] < 0:
