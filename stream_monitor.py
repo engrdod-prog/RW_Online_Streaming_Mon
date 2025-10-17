@@ -32,7 +32,7 @@ SCHEDULE = {
     "timezone": "Asia/Singapore"
 }
 
-REFRESH_INTERVAL = 30  # seconds
+REFRESH_INTERVAL = 10  # seconds
 
 # Logging configuration
 LOGGING_CONFIG = {
@@ -83,7 +83,6 @@ def is_within_schedule():
             return True
     return False
 
-@st.cache_data(ttl=REFRESH_INTERVAL)
 def check_url_status(url: str) -> bool:
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -668,21 +667,25 @@ st.markdown(f"### Status: {'🟢 Monitoring' if within_schedule else '⚪ Outsid
 if st.button("🔄 Refresh Now", type="secondary"):
     st.rerun()
 
-if not st_autorefresh:
-    st.caption("Auto-refresh every 30 seconds")
-
 # Auto-refresh implementation
-if st_autorefresh:
-    st_autorefresh(interval=REFRESH_INTERVAL * 1000, key="uptime-autorefresh")
-else:
+try:
+    if st_autorefresh:
+        st_autorefresh(interval=REFRESH_INTERVAL * 1000, key="uptime-autorefresh")
+        st.caption("Auto-refresh every 10 seconds")
+    else:
+        raise ImportError("st_autorefresh not available")
+except Exception:
     # Reliable browser-based meta refresh fallback
+    st.caption("Auto-refresh every 10 seconds (using meta refresh)")
     st.markdown(f"""
     <meta http-equiv="refresh" content="{REFRESH_INTERVAL}">
     """, unsafe_allow_html=True)
 
 # Show last checked timestamp
 tz = pytz.timezone(SCHEDULE["timezone"])
-st.caption(f"Last checked: {datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S %Z')}")
+current_time = datetime.now(tz)
+st.caption(f"Last checked: {current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+# st.caption(f"Page loaded at: {current_time.strftime('%H:%M:%S.%f')[:-3]}")  # Show milliseconds for debugging
 
 for stream in STREAMS:
     col1, col2 = st.columns([1, 4])
